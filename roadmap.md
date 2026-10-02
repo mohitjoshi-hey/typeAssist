@@ -2,7 +2,84 @@
 
 A system-wide typing assistant in C++.
 
+```# typeAssist Roadmap
+
+A system-wide typing assistant in C++.
+
 ```
+KeyEvent -> TextEngine -> TextAction
+```
+
+The engine is independent of the OS and of AI. Windows and AI plug in around it.
+
+**Current stage:** Phase 1 (core engine)
+**Next step:** Capitalization rule in `TextEngine`, with tests
+
+Legend: `[x]` done, `[ ]` to do
+
+---
+
+## Phase 0: Setup and architecture
+
+- [x] Decide architecture (Input layer -> Text Engine -> Action layer)
+- [x] Create GitHub repo `typeAssist`
+- [x] Write `CMakeLists.txt` (core library + demo executable)
+- [x] Add placeholder `src/` files so the project builds
+- [ ] Add `README.md`
+- [x] First commit: project builds successfully
+
+## Phase 1: Core engine (no Windows, no AI)
+
+Core types
+- [x] `KeyEvent`, `KeyType` (declared in `TextEngine.h`)
+- [x] `TextAction`, `ActionType` (declared in `TextEngine.h`)
+- [ ] `TextState` (what the engine remembers)
+- [ ] `TextEngine::process()` (placeholder only: passes everything through)
+
+Rules, one at a time, each with tests
+- [ ] Capitalize first letter after `.` `!` `?`
+- [ ] Punctuation spacing (`hello,world` -> `hello, world`)
+- [ ] Backspace / editing behavior
+- [ ] Unit tests (`tests/`), enable in CMake
+
+Edge cases to handle
+- [ ] Abbreviations (`Mr. Smith`)
+- [ ] Decimal numbers (`3.14`)
+- [ ] URLs
+- [ ] Code (don't "correct" it)
+- [ ] Cursor movement
+- [ ] Undo
+
+## Phase 2: Windows integration
+
+- [ ] Windows keyboard hook -> `KeyEvent`
+- [ ] Action executor (insert / replace / delete / pass-through)
+- [ ] Test in Chrome, VS Code, Word, etc.
+
+## Phase 3: AI layer
+
+- [ ] Spelling detection (flag suspicious words)
+- [ ] AI API call for corrections
+- [ ] Replace misspelled word (`goign` -> `going`)
+- [ ] Grammar suggestions
+
+---
+
+## Feature ideas (not committed)
+
+- [ ] Per-app enable/disable
+- [ ] Hotkey to pause the assistant
+- [ ] User-configurable rules
+- [ ] Custom dictionary
+
+---
+
+## Changelog
+
+| Date | Update |
+|------|--------|
+| 2026-09-30 | Repo created, architecture decided, `CMakeLists.txt` written |
+| 2026-10-01 | Project builds with MSVC + CMake; placeholder `TextEngine` committed and pushed (`ca8bd27`) |
 KeyEvent -> TextEngine -> TextAction
 ```
 
