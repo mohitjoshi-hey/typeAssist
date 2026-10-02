@@ -2,22 +2,24 @@
 #include <iostream>
 #include <string>
 
+using namespace std;
+
 int main() {
     TextEngine engine;
-    const std::string input = "hello. this is a test";
-    std::string output;
+    const string input = "hello,world. this is a test";
+    string output;
 
     for (char c : input) {
         KeyEvent event{c == ' ' ? KeyType::Space : KeyType::Character, c};
         TextAction action = engine.process(event);
 
         if (action.type == ActionType::Replace) {
-            output += action.text;// engine replaced the key
+            output += action.text;
         } else {
-            output += c; //engine let the key through
+            output += c;
         }
     }
 
-    std::cout << output << '\n';
+    cout << output << '\n';
     return 0;
 }

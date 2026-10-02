@@ -1,34 +1,45 @@
 #include <typeassist/TextEngine.h>
 
 #include <cctype>
+#include <string>
+
+using namespace std;
 
 TextAction TextEngine::process(const KeyEvent& event) {
-    // Only characters affect capitalization for now.
+    // Space, Enter, Backspace: the user handled spacing themselves.
     if (event.type != KeyType::Character) {
+        spaceNeeded_ = false;
         return {ActionType::PassThrough, ""};
     }
 
     const unsigned char c = static_cast<unsigned char>(event.character);
 
-    // First letter of a sentence: capitalize it.
-    if (capitalizeNext_ && std::isalpha(c)) {
-        capitalizeNext_ = false;
-
-        const unsigned char upper =
-            static_cast<unsigned char>(std::toupper(c));
-
-        if (upper == c) {
-            return {ActionType::PassThrough, ""};  //already a capital
+    // rule 2: a letter right after , or ; needs a space before it.
+    string prefix;
+    if (spaceNeeded_) {
+        spaceNeeded_ = false;
+        if (isalpha(c)) {
+            prefix = " ";
         }
-        return {
-            ActionType::Replace, std::string(1, static_cast<char>(upper))
-        };
     }
 
-    // a sentence ended: the next letter should be capitalized.
-    if (c == '.' || c == '!' || c == '?') {
+    //rule 1: capitalize the first letter of a sentence.
+    string text(1, event.character);
+    if (capitalizeNext_ && isalpha(c)) {
+        capitalizeNext_ = false;
+        text[0] = static_cast<char>(toupper(c));
+    } else if (c == '.' || c == '!' || c == '?') {
         capitalizeNext_ = true;
     }
 
-    return {ActionType::PassThrough, ""};
+    // remember that a space is now expected after this punctuation.
+    if (c == ',' || c == ';') {
+        spaceNeeded_ = true;
+    }
+
+    // Nothing changed: let the user's key through untouched.
+    if (prefix.empty() && text[0] == event.character) {
+        return {ActionType::PassThrough, ""};
+    }
+    return {ActionType::Replace, prefix + text};
 }

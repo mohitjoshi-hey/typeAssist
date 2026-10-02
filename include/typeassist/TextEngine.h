@@ -32,4 +32,5 @@ public:
 
 private:
     bool capitalizeNext_ = true;
+    bool spaceNeeded_ = false;
 };
