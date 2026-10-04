@@ -34,13 +34,23 @@ static string simulateTyping(const string& input) {
 
 static int failures = 0;
 
+// Shows Backspace as <BS> so the terminal doesn't act on it.
+static string printable(const string& s) {
+    string out;
+    for (char c : s) {
+        if (c == '\b') out += "<BS>";
+        else out += c;
+    }
+    return out;
+}
+
 static void check(const string& input, const string& expected) {
     const string actual = simulateTyping(input);
     if (actual == expected) {
-        cout << "PASS: \"" << input << "\"\n";
+        cout << "PASS: \"" << printable(input) << "\"\n";
     } else {
         ++failures;
-        cout << "FAIL: \"" << input << "\"\n"
+        cout << "FAIL: \"" << printable(input) << "\"\n"
              << "  expected: \"" << expected << "\"\n"
              << "  actual:   \"" << actual << "\"\n";
     }
