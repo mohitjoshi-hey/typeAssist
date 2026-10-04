@@ -5,6 +5,19 @@
 
 using namespace std;
 
+// Words whose trailing '.' does not end a sentence ("Mr. Smith").
+static bool isAbbreviation(const string& word) {
+    static const char* const kAbbreviations[] = {
+        "mr", "mrs", "ms", "dr", "prof", "sr", "jr", "st", "vs"
+    };
+    for (const char* abbreviation : kAbbreviations) {
+        if (word == abbreviation) {
+            return true;
+        }
+    }
+    return false;
+}
+
 TextAction TextEngine::process(const KeyEvent& event) {
     if (event.type == KeyType::Backspace) {
         return handleBackspace();
@@ -13,9 +26,12 @@ TextAction TextEngine::process(const KeyEvent& event) {
     HistoryEntry entry;
     entry.before = state_;
 
-    // Space and Enter: the user handled spacing themselves.
+    // Space and Enter: the user handled spacing themselves, and a word ended.
     if (event.type != KeyType::Character) {
         state_.spaceNeeded = false;
+        state_.decimalPending = false;
+        state_.lastWasDigit = false;
+        state_.word.clear();
         remember(entry);
         return {ActionType::PassThrough, ""};
     }
@@ -38,14 +54,47 @@ TextAction TextEngine::processCharacter(char ch, bool& insertedSpace) {
     }
     insertedSpace = !prefix.empty();
 
+    // Rule 4: a digit right after "3." means the dot was a decimal point,
+    // so undo the "sentence ended" effect of that dot.
+    if (state_.decimalPending) {
+        state_.decimalPending = false;
+        if (isdigit(c)) {
+            state_.capitalizeNext = state_.capBeforeDot;
+        }
+    }
+
     // Rule 1: capitalize the first letter of a sentence.
     string text(1, ch);
     if (state_.capitalizeNext && isalpha(c)) {
         state_.capitalizeNext = false;
         text[0] = static_cast<char>(toupper(c));
-    } else if (c == '.' || c == '!' || c == '?') {
+    } else if (state_.capitalizeNext && isdigit(c)) {
+        // A sentence that starts with a number: nothing to capitalize.
+        state_.capitalizeNext = false;
+    } else if (c == '!' || c == '?') {
         state_.capitalizeNext = true;
+    } else if (c == '.') {
+        if (isAbbreviation(state_.word)) {
+            // Rule 3: "Mr." does not end a sentence.
+        } else {
+            if (state_.lastWasDigit) {
+                // Might be a decimal point: wait for the next key.
+                state_.decimalPending = true;
+                state_.capBeforeDot = state_.capitalizeNext;
+            }
+            state_.capitalizeNext = true;
+        }
     }
+
+    // Track the word being typed, and whether the last key was a digit.
+    if (isalpha(c)) {
+        if (state_.word.size() < 16) {
+            state_.word += static_cast<char>(tolower(c));
+        }
+    } else {
+        state_.word.clear();
+    }
+    state_.lastWasDigit = isdigit(c) != 0;
 
     // Remember that a space is now expected after this punctuation.
     if (c == ',' || c == ';') {
