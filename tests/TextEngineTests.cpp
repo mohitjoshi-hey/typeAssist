@@ -5,18 +5,31 @@
 
 using namespace std;
 
-// Types a string through a fresh engine and returns what the user would see.
+static KeyType keyTypeFor(char c) {
+    if (c == ' ') return KeyType::Space;
+    if (c == '\b') return KeyType::Backspace;
+    return KeyType::Character;
+}
+
+// Types a string through a fresh engine and returns what the screen shows.
+// A '\b' in the input means the user pressed Backspace.
 static string simulateTyping(const string& input) {
     TextEngine engine;
-    string output;
+    string screen;
 
     for (char c : input) {
-        KeyEvent event{c == ' ' ? KeyType::Space : KeyType::Character, c};
+        KeyEvent event{keyTypeFor(c), c};
         TextAction action = engine.process(event);
-        output += (action.type == ActionType::Replace) ? action.text
-                                                       : string(1, c);
+
+        if (event.type == KeyType::Backspace) {
+            if (!screen.empty()) screen.pop_back();
+        } else if (action.type == ActionType::Replace) {
+            screen += action.text;
+        } else {
+            screen += c;
+        }
     }
-    return output;
+    return screen;
 }
 
 static int failures = 0;
@@ -34,7 +47,7 @@ static void check(const string& input, const string& expected) {
 }
 
 int main() {
-    // Capitalization
+    // --- Capitalization ---
     check("hello. world",         "Hello. World");
     check("hello! how are you?",  "Hello! How are you?");
     check("hello? yes.",          "Hello? Yes.");
@@ -43,12 +56,21 @@ int main() {
     check("hello... world",       "Hello... World");
     check("hi. ok. fine",         "Hi. Ok. Fine");
 
-    // Punctuation spacing
-    check("hello,world",          "Hello, world"); // space inserted
-    check("hello, world",         "Hello, world");//no double space
-    check("a,b;c",                "A, b; c");// comma and semicolon
-    check("pay 1,000 now",        "Pay 1,000 now");// digits untouched
-    check("hi,there. ok,fine",    "Hi, there. Ok, fine"); // both rules together
+    // --- Punctuation spacing ---
+    check("hello,world",          "Hello, world");
+    check("hello, world",         "Hello, world");
+    check("a,b;c",                "A, b; c");
+    check("pay 1,000 now",        "Pay 1,000 now");
+    check("hi,there. ok,fine",    "Hi, there. Ok, fine");
+
+    // --- Backspace ---
+    check("ok.\b the end",        "Ok the end"); // deleted '.', no capital
+    check("h\bh",                 "H"); // deleted first letter
+    check("a,\bb",                "Ab");  // deleted ',', no space
+    check("a,b\bc",               "A, c");  // auto space kept, not doubled
+    check("a, \bb",               "A, b");// deleted the space, re-added
+    check("\bhello",              "Hello");//Backspace with no history
+    check("ab\b\bc",              "C"); // several Backspaces
 
     if (failures == 0) {
         cout << "\nAll tests passed.\n";
