@@ -9,7 +9,7 @@ KeyEvent -> TextEngine -> TextAction
 The engine is independent of the OS and of AI. Windows and AI plug in around it.
 
 **Current stage:** Phase 1 (core engine)
-**Next step:** Edge cases: abbreviations (`Mr. Smith`) and decimals (`3.14`)
+**Next step:** Capitalize after Enter (new line), then URL detection
 
 Legend: `[x]` done, `[ ]` to do
 
@@ -30,7 +30,7 @@ Core types
 - [x] `KeyEvent`, `KeyType` (declared in `TextEngine.h`)
 - [x] `TextAction`, `ActionType` (declared in `TextEngine.h`)
 - [x] `TextState` (what the engine remembers)
-- [ ] `TextEngine::process()` (in progress: capitalization, `,` `;` spacing and Backspace done)
+- [ ] `TextEngine::process()` (in progress: capitalization, `,` `;` spacing, Backspace, abbreviations and decimals done)
 
 Rules, one at a time, each with tests
 - [x] Capitalize first letter after `.` `!` `?`
@@ -40,8 +40,9 @@ Rules, one at a time, each with tests
 - [x] Unit tests (`tests/`), enabled in CMake
 
 Edge cases to handle
-- [ ] Abbreviations (`Mr. Smith`): currently capitalizes the next word
-- [ ] Decimal numbers (`3.14`): currently capitalizes the next word after `3.5 is`
+- [x] Abbreviations (`Mr. smith`): `mr mrs ms dr prof sr jr st vs`
+- [x] Decimal numbers (`3.14`) and sentences that start with a number
+- [ ] Initials and dotted abbreviations (`J. K. Rowling`, `e.g.`, `etc.`)
 - [ ] Capitalize after Enter (new line)
 - [ ] URLs
 - [ ] Code (don't "correct" it)
@@ -80,3 +81,4 @@ Edge cases to handle
 | 2026-10-01 | Project builds with MSVC + CMake; placeholder `TextEngine` committed and pushed (`ca8bd27`) |
 | 2026-10-03 | Capitalization rule, `,` `;` spacing rule, and first 12 tests passing |
 | 2026-10-04 | Backspace handling with `TextState` history; 19 tests passing |
+| 2026-10-04 | Abbreviation and decimal rules; 28 tests passing |
