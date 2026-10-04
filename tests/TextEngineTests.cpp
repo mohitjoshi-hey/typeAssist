@@ -74,13 +74,26 @@ int main() {
     check("hi,there. ok,fine",    "Hi, there. Ok, fine");
 
     // --- Backspace ---
-    check("ok.\b the end",        "Ok the end"); // deleted '.', no capital
-    check("h\bh",                 "H"); // deleted first letter
-    check("a,\bb",                "Ab");  // deleted ',', no space
-    check("a,b\bc",               "A, c");  // auto space kept, not doubled
-    check("a, \bb",               "A, b");// deleted the space, re-added
-    check("\bhello",              "Hello");//Backspace with no history
-    check("ab\b\bc",              "C"); // several Backspaces
+    check("ok.\b the end",        "Ok the end");   // deleted '.', no capital
+    check("h\bh",                 "H");            // deleted first letter
+    check("a,\bb",                "Ab");           // deleted ',', no space
+    check("a,b\bc",               "A, c");         // auto space kept, not doubled
+    check("a, \bb",               "A, b");         // deleted the space, re-added
+    check("\bhello",              "Hello");        // Backspace with no history
+    check("ab\b\bc",              "C");            // several Backspaces
+
+    // --- Abbreviations ---
+    check("mr. smith",            "Mr. smith");              // not a sentence end
+    check("see dr. jones. he left", "See dr. jones. He left"); // real end still works
+    check("mrs\b. smith",         "Mr. smith");    // Backspace restores the word
+
+    // --- Decimal numbers ---
+    check("version 3.5 is out",   "Version 3.5 is out");     // not a sentence end
+    check("pi is 3.14. ok",       "Pi is 3.14. Ok");         // decimal, then real end
+    check("i have 3. then 4",     "I have 3. Then 4");       // "3." really ends it
+    check("3.5 apples",           "3.5 apples");             // starts with a number
+    check("1,000 items",          "1,000 items");            // digits start a sentence
+    check("x 3.5\b\b. y",         "X 3. Y");       // Backspace restores decimal state
 
     if (failures == 0) {
         cout << "\nAll tests passed.\n";
