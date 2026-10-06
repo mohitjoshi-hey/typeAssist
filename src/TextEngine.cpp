@@ -5,7 +5,7 @@
 
 using namespace std;
 
-// Words whose trailing '.' does not end a sentence ("Mr. Smith").
+// words whose trailing '.' does not end a sentence ("Mr. Smith").
 static bool isAbbreviation(const string& word) {
     static const char* const kAbbreviations[] = {
         "mr", "mrs", "ms", "dr", "prof", "sr", "jr", "st", "vs"
@@ -32,6 +32,10 @@ TextAction TextEngine::process(const KeyEvent& event) {
         state_.decimalPending = false;
         state_.lastWasDigit = false;
         state_.word.clear();
+        if (event.type == KeyType::Enter) {
+            // Rule 5: a new line starts a new sentence.
+            state_.capitalizeNext = true;
+        }
         remember(entry);
         return {ActionType::PassThrough, ""};
     }
@@ -115,8 +119,7 @@ TextAction TextEngine::handleBackspace() {
 
         state_ = last.before;
 
-        // Backspace removes only the user's key. A space we inserted before
-        // it is still on screen, so we must not insert another one.
+        // Backspace removes only the user's key. A space we inserted before it is still on screen, so we must not insert another one.
         if (last.insertedSpace) {
             state_.spaceNeeded = false;
         }

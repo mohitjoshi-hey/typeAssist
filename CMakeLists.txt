@@ -12,7 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # ---- Core engine library ----------------------------------------------------
-# The engine knows nothing about Windows or AI. Later, the Windows hook and the AI layer will link against this library.
+# The engine knows nothing about Windows or AI. Later, the Windows hook and
+# the AI layer will link against this library.
 add_library(typeassist_core
     src/TextEngine.cpp
 )
@@ -46,5 +47,3 @@ add_executable(typeassist_tests
 target_link_libraries(typeassist_tests PRIVATE typeassist_core)
 
 add_test(NAME TextEngineTests COMMAND typeassist_tests)
-# enable_testing()
-# add_subdirectory(tests)
