@@ -2,7 +2,7 @@
 # typeAssist
 
 <p align="center">
-  <strong>A lightweight, system-wide typing assistant built in modern C++.</strong>
+  <strong>A lightweight, system-wide typing assistant.</strong>
 </p>
 
 <p align="center">
@@ -12,13 +12,9 @@
   <img src="https://img.shields.io/badge/Status-Phase%201%20%E2%80%93%20Core%20Engine-orange?style=for-the-badge" alt="Project Status">
 </p>
 
-<p align="center">
-  <em>Type naturally. Let typeAssist handle the small things.</em>
-</p>
-
 ---
 
-## 🚀 Overview
+## Overview
 
 **typeAssist** is a lightweight typing-assistance project written in modern C++.
 
@@ -30,7 +26,7 @@ The long-term goal is to make typeAssist work system-wide across desktop applica
 
 ---
 
-## ✨ Features
+## Features
 
 | Feature | Status |
 |---|:---:|
@@ -51,14 +47,9 @@ The long-term goal is to make typeAssist work system-wide across desktop applica
 | AI spelling correction | ⏳ |
 | Grammar assistance | ⏳ |
 
-> **Legend:**  
-> ✅ Implemented  
-> 🚧 Current focus  
-> ⏳ Planned
-
 ---
 
-## 🎯 Example
+## Example
 
 Input:
 
@@ -80,7 +71,7 @@ AI-powered spelling and grammar correction are planned for a later phase.
 
 ---
 
-## 🖥️ Demo
+## Demo
 
 > A visual demonstration will be added once the Windows keyboard integration is complete.
 
@@ -105,7 +96,7 @@ The goal is for corrections to happen **while typing**, rather than as a separat
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 The project follows a layered architecture:
 
@@ -179,7 +170,7 @@ This separation makes the engine easier to test, maintain, and eventually reuse 
 
 ---
 
-## 🧠 Design Philosophy
+## Design Philosophy
 
 ### Platform-independent core
 
@@ -228,7 +219,7 @@ The architecture is intended to support more advanced functionality later withou
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 typeAssist/
@@ -280,7 +271,7 @@ Tracks the project's development phases and upcoming features.
 
 ---
 
-## 🧪 Testing
+## Testing
 
 typeAssist uses CMake and CTest for automated testing.
 
@@ -307,7 +298,7 @@ The test suite currently covers functionality implemented during Phase 1, includ
 
 ---
 
-## 🔨 Building
+## Building
 
 ### Requirements
 
@@ -342,130 +333,7 @@ ctest --test-dir build -C Debug --output-on-failure
 
 ---
 
-## 🗺️ Roadmap
-
-typeAssist is being developed incrementally.
-
-### Phase 0 — Foundation
-
-- [x] Project architecture
-- [x] GitHub repository
-- [x] CMake build system
-- [x] Initial project structure
-- [x] First working build
-
-### Phase 1 — Core Text Engine
-
-- [x] `KeyEvent`
-- [x] `TextAction`
-- [x] `TextState`
-- [x] Sentence capitalization
-- [x] `,` spacing
-- [x] `;` spacing
-- [x] Backspace handling
-- [x] Editing history
-- [x] Common abbreviation handling
-- [x] Decimal-number handling
-- [x] Enter/new-line capitalization
-- [x] Unit tests
-- [ ] URL detection
-- [ ] Code-aware text detection
-- [ ] Initials and dotted abbreviations
-- [ ] Cursor movement
-- [ ] Undo support
-
-### Phase 2 — Windows Integration
-
-- [ ] Windows global keyboard hook
-- [ ] Convert keyboard input into `KeyEvent`
-- [ ] Execute `TextAction`
-- [ ] Test across desktop applications
-- [ ] Test with Chrome
-- [ ] Test with VS Code
-- [ ] Test with Microsoft Word
-
-### Phase 3 — AI Assistance
-
-- [ ] AI-powered spelling detection
-- [ ] Context-aware correction
-- [ ] Minimal-context API requests
-- [ ] Replacement handling
-- [ ] Grammar assistance
-- [ ] Privacy-conscious request handling
-
----
-
-## 🔭 Current Focus
-
-### URL Detection
-
-The next major feature is URL detection.
-
-The engine needs to recognize URLs such as:
-
-```text
-example.com
-www.example.com
-https://example.com
-http://example.com
-```
-
-and avoid treating punctuation inside URLs as normal sentence punctuation.
-
-For example:
-
-```text
-Visit https://example.com
-```
-
-should remain unchanged.
-
-This feature is important before expanding punctuation handling to characters such as:
-
-```text
-.
-!
-?
-:
-```
-
-because those characters can legitimately appear inside URLs.
-
----
-
-## 🤖 Future AI Integration
-
-AI functionality will remain separate from the deterministic core engine.
-
-The planned architecture is:
-
-```text
-Keyboard Input
-      │
-      ▼
-Windows Integration
-      │
-      ▼
-   TextEngine
-      │
-      ├──────────────► Normal TextAction
-      │
-      ▼
- AI Assistance Layer
-      │
-      ▼
-Correction / Suggestion
-```
-
-The goal is not to send an entire document to an AI service.
-
-Instead, the future system should send only the relevant word or surrounding context needed for a correction.
-
-This keeps the system efficient and makes privacy an important part of the design.
-
----
-
-## 🛠️ Technology
+## Tech Stack
 
 | Technology | Purpose |
 |---|---|
@@ -475,49 +343,8 @@ This keeps the system efficient and makes privacy an important part of the desig
 | **Windows API** | Planned keyboard integration |
 | **AI/API** | Planned intelligent assistance |
 
----
-
-## 📊 Development Status
-
-```text
-Phase 0
-Foundation
-████████████████████ 100%
-
-Phase 1
-Core Engine
-████████████████░░░░  ~80%
-
-Phase 2
-Windows Integration
-░░░░░░░░░░░░░░░░░░░░   0%
-
-Phase 3
-AI Assistance
-░░░░░░░░░░░░░░░░░░░░   0%
-```
-
-> Progress percentages are approximate and represent development direction rather than strict task completion.
 
 ---
-
-## 📌 Project Philosophy
-
-typeAssist is being built from the inside out.
-
-Instead of starting with a Windows keyboard hook and putting all the logic inside it, the project first builds a reliable and testable text-processing engine.
-
-```text
-Reliable Core
-      ↓
-Edge Cases
-      ↓
-OS Integration
-      ↓
-Real-world Testing
-      ↓
-AI Assistance
-```
 
 The idea is simple:
 
@@ -525,11 +352,6 @@ The idea is simple:
 
 ---
 
-## 📄 License
+## License
 
 License information will be added as the project matures.
-```
-
-One important change from the earlier README: I’ve **not marked URL detection as completed**. Your current roadmap explicitly has it as the next Phase 1 task, so the README should accurately reflect the repository rather than oversell it.
-
-You can paste that entire block directly into `README.md`.
