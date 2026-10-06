@@ -9,7 +9,7 @@ KeyEvent -> TextEngine -> TextAction
 The engine is independent of the OS and of AI. Windows and AI plug in around it.
 
 **Current stage:** Phase 1 (core engine)
-**Next step:** Capitalize after Enter (new line), then URL detection
+**Next step:** URL detection (leave `example.com` and `http://...` alone)
 
 Legend: `[x]` done, `[ ]` to do
 
@@ -30,7 +30,7 @@ Core types
 - [x] `KeyEvent`, `KeyType` (declared in `TextEngine.h`)
 - [x] `TextAction`, `ActionType` (declared in `TextEngine.h`)
 - [x] `TextState` (what the engine remembers)
-- [ ] `TextEngine::process()` (in progress: capitalization, `,` `;` spacing, Backspace, abbreviations and decimals done)
+- [ ] `TextEngine::process()` (in progress: capitalization, `,` `;` spacing, Backspace, abbreviations, decimals and Enter done)
 
 Rules, one at a time, each with tests
 - [x] Capitalize first letter after `.` `!` `?`
@@ -43,7 +43,7 @@ Edge cases to handle
 - [x] Abbreviations (`Mr. smith`): `mr mrs ms dr prof sr jr st vs`
 - [x] Decimal numbers (`3.14`) and sentences that start with a number
 - [ ] Initials and dotted abbreviations (`J. K. Rowling`, `e.g.`, `etc.`)
-- [ ] Capitalize after Enter (new line)
+- [x] Capitalize after Enter (new line)
 - [ ] URLs
 - [ ] Code (don't "correct" it)
 - [ ] Cursor movement
@@ -70,6 +70,9 @@ Edge cases to handle
 - [ ] Hotkey to pause the assistant
 - [ ] User-configurable rules
 - [ ] Custom dictionary
+- [ ] Per-app Enter behavior: Enter = new line in chat apps (WhatsApp, ChatGPT),
+      send with Shift+Enter or Ctrl+Enter (needs Phase 2: modifier keys in `KeyEvent`,
+      foreground-app detection, key-swap action)
 
 ---
 
@@ -82,3 +85,4 @@ Edge cases to handle
 | 2026-10-03 | Capitalization rule, `,` `;` spacing rule, and first 12 tests passing |
 | 2026-10-04 | Backspace handling with `TextState` history; 19 tests passing |
 | 2026-10-04 | Abbreviation and decimal rules; 28 tests passing |
+| 2026-10-06 | Capitalize after Enter; 34 tests passing |
