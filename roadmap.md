@@ -9,7 +9,7 @@ KeyEvent -> TextEngine -> TextAction
 The engine is independent of the OS and of AI. Windows and AI plug in around it.
 
 **Current stage:** Phase 1 (core engine)
-**Next step:** URL detection (leave `example.com` and `http://...` alone)
+**Next step:** Punctuation spacing for `. ! ?` (with exceptions for domains and file names)
 
 Legend: `[x]` done, `[ ]` to do
 
@@ -30,12 +30,12 @@ Core types
 - [x] `KeyEvent`, `KeyType` (declared in `TextEngine.h`)
 - [x] `TextAction`, `ActionType` (declared in `TextEngine.h`)
 - [x] `TextState` (what the engine remembers)
-- [ ] `TextEngine::process()` (in progress: capitalization, `,` `;` spacing, Backspace, abbreviations, decimals and Enter done)
+- [ ] `TextEngine::process()` (in progress: capitalization, `,` `;` spacing, Backspace, abbreviations, decimals, Enter and links done)
 
 Rules, one at a time, each with tests
 - [x] Capitalize first letter after `.` `!` `?`
 - [x] Punctuation spacing for `,` and `;` (`hello,world` -> `hello, world`)
-- [ ] Punctuation spacing for `.` `!` `?` `:` (needs URL/code detection first)
+- [ ] Punctuation spacing for `.` `!` `?` `:` (links are done; still needs a list of domain endings / file extensions, and code detection)
 - [x] Backspace / editing behavior (state history, last 256 keys)
 - [x] Unit tests (`tests/`), enabled in CMake
 
@@ -44,7 +44,8 @@ Edge cases to handle
 - [x] Decimal numbers (`3.14`) and sentences that start with a number
 - [ ] Initials and dotted abbreviations (`J. K. Rowling`, `e.g.`, `etc.`)
 - [x] Capitalize after Enter (new line)
-- [ ] URLs
+- [x] URLs, domains, file names, emails: `.` `!` `?` only end a sentence when a space or Enter follows; no space is added after a comma inside a link
+- [ ] A link typed at the very start of a sentence still gets a capital first letter (`Github.com`); needs app/field awareness (Phase 2)
 - [ ] Code (don't "correct" it)
 - [ ] Cursor movement
 - [ ] Undo
@@ -86,3 +87,4 @@ Edge cases to handle
 | 2026-10-04 | Backspace handling with `TextState` history; 19 tests passing |
 | 2026-10-04 | Abbreviation and decimal rules; 28 tests passing |
 | 2026-10-06 | Capitalize after Enter; 34 tests passing |
+| 2026-10-06 | Sentence ends need a following space; link detection; 42 tests passing |
