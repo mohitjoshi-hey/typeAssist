@@ -1,5 +1,6 @@
 #include <typeassist/TextEngine.h>
 
+#include <algorithm>
 #include <iostream>
 #include <string>
 
@@ -8,6 +9,7 @@ using namespace std;
 static KeyType keyTypeFor(char c) {
     if (c == ' ') return KeyType::Space;
     if (c == '\b') return KeyType::Backspace;
+    if (c == '\n') return KeyType::Enter;
     return KeyType::Character;
 }
 
@@ -24,6 +26,8 @@ static string simulateTyping(const string& input) {
         if (event.type == KeyType::Backspace) {
             if (!screen.empty()) screen.pop_back();
         } else if (action.type == ActionType::Replace) {
+            // delete `erase` characters, then type the replacement text
+            screen.erase(screen.size() - min(action.erase, screen.size()));
             screen += action.text;
         } else {
             screen += c;
@@ -34,11 +38,12 @@ static string simulateTyping(const string& input) {
 
 static int failures = 0;
 
-// Shows Backspace as <BS> so the terminal doesn't act on it.
+// Shows Backspace as <BS> and Enter as <Enter> so output stays on one line.
 static string printable(const string& s) {
     string out;
     for (char c : s) {
         if (c == '\b') out += "<BS>";
+        else if (c == '\n') out += "<Enter>";
         else out += c;
     }
     return out;
@@ -51,8 +56,8 @@ static void check(const string& input, const string& expected) {
     } else {
         ++failures;
         cout << "FAIL: \"" << printable(input) << "\"\n"
-             << "  expected: \"" << expected << "\"\n"
-             << "  actual:   \"" << actual << "\"\n";
+             << "  expected: \"" << printable(expected) << "\"\n"
+             << "  actual:   \"" << printable(actual) << "\"\n";
     }
 }
 
@@ -83,17 +88,64 @@ int main() {
     check("ab\b\bc",              "C");            // several Backspaces
 
     // --- Abbreviations ---
-    check("mr. smith",            "Mr. smith");              // not a sentence end
+    check("mr. smith",            "Mr. smith");                // not a sentence end
     check("see dr. jones. he left", "See dr. jones. He left"); // real end still works
     check("mrs\b. smith",         "Mr. smith");    // Backspace restores the word
 
     // --- Decimal numbers ---
-    check("version 3.5 is out",   "Version 3.5 is out");     // not a sentence end
-    check("pi is 3.14. ok",       "Pi is 3.14. Ok");         // decimal, then real end
-    check("i have 3. then 4",     "I have 3. Then 4");       // "3." really ends it
-    check("3.5 apples",           "3.5 apples");             // starts with a number
-    check("1,000 items",          "1,000 items");            // digits start a sentence
+    check("version 3.5 is out",   "Version 3.5 is out");       // not a sentence end
+    check("pi is 3.14. ok",       "Pi is 3.14. Ok");           // decimal, then real end
+    check("i have 3. then 4",     "I have 3. Then 4");         // "3." really ends it
+    check("3.5 apples",           "3.5 apples");               // starts with a number
+    check("1,000 items",          "1,000 items");              // digits start a sentence
     check("x 3.5\b\b. y",         "X 3. Y");       // Backspace restores decimal state
+
+    // --- Enter (a new line starts a new sentence) ---
+    check("hello\nworld",         "Hello\nWorld");
+    check("hi,\nthere",           "Hi,\nThere");
+    check("a.\nb",                "A.\nB");
+    check("3.5\nx",               "3.5\nX");       // after a decimal number
+    check("dr.\nsmith",           "Dr.\nSmith");   // after an abbreviation
+    check("ok\n\b next",          "Ok next");      // Backspace undoes the Enter
+
+    // --- Domains, files, emails: a . ! ? needs a space after it to end a sentence ---
+    check("visit example.com now",  "Visit example.com now");
+    check("open main.cpp",          "Open main.cpp");
+    check("mail john@example.com. thanks", "Mail john@example.com. Thanks");
+    check("search?q=cats",          "Search?q=cats");
+    check("wait...what",            "Wait...what");
+
+    // --- Links: no space is added after a comma inside one ---
+    check("see https://a.com/x,y now", "See https://a.com/x,y now");
+    check("go to www.a.com, then,fine", "Go to www.a.com, then, fine"); // ends at the space
+    check("see http://\b\b,b",      "See http:, b"); // Backspace undoes link detection
+
+    // --- Backspace steps back one character on screen, including inserted spaces ---
+    check("a,b\b\bc",               "A, c");         // deleted the auto space too
+
+    // --- A word stuck to ! ? . gets its forgotten space ---
+    check("hello!world now",       "Hello! World now");
+    check("really?yes sir",        "Really? Yes sir");
+    check("i went home.Then i slept.", "I went home. Then i slept.");
+    check("mr.Smith left",         "Mr. Smith left");
+    check("see dr.Jones now",      "See dr. Jones now");
+    check("J.K.Rowling wrote",     "J.K. Rowling wrote");
+    check("hi!there\nnext",        "Hi! There\nNext");  // Enter ends the word too
+    check("what?!no way",          "What?! No way");
+
+    // --- ...but not for domains, files, links, emails, numbers, code-like words ---
+    check("hello.world now",       "Hello.world now");     // lowercase after a dot: left alone
+    check("open Notes.TXT now",    "Open Notes.TXT now");  // file extension
+    check("see Node.JS docs",      "See Node.JS docs");
+    check("page?id=5 ok",          "Page?id=5 ok");
+    check("mail john@example.Com now", "Mail john@example.Com now");
+    check("version 3.Beta now",    "Version 3.Beta now");
+    check("open .Gitignore now",   "Open .Gitignore now");
+    check("see www.Site.Com now",  "See www.Site.Com now");
+
+    // --- Backspace after a forgotten space was fixed ---
+    check("hi!there \b\b\b\b\b\b\bx", "Hi!x");        // all the way back to the "!"
+    check("hi!there \b\bs now",   "Hi! Thers now");     // no second space added
 
     if (failures == 0) {
         cout << "\nAll tests passed.\n";
