@@ -134,7 +134,7 @@ int main() {
     check("what?!no way",          "What?! No way");
 
     // --- ...but not for domains, files, links, emails, numbers, code-like words ---
-    check("hello.world now",       "Hello.world now");     // lowercase after a dot: left alone
+    check("hello.world now",       "Hello. world now");
     check("open Notes.TXT now",    "Open Notes.TXT now");  // file extension
     check("see Node.JS docs",      "See Node.JS docs");
     check("page?id=5 ok",          "Page?id=5 ok");
@@ -144,8 +144,60 @@ int main() {
     check("see www.Site.Com now",  "See www.Site.Com now");
 
     // --- Backspace after a forgotten space was fixed ---
-    check("hi!there \b\b\b\b\b\b\bx", "Hi!x");        // all the way back to the "!"
+    check("hi!there \b\b\b\b\b\b\bx", "Hi! X");        // all the way back to the "!"
     check("hi!there \b\bs now",   "Hi! Thers now");     // no second space added
+
+    // --- Intelligent . ! ? Spacing (Next Feature Specification) ---
+    // Sentence spacing
+    check("hello.world",           "Hello. world");
+    check("hello!world",           "Hello! World");
+    check("hello?world",           "Hello? World");
+    check("hello!how are you",     "Hello! How are you");
+    check("really?yes",            "Really? Yes");
+
+    // Domains
+    check("example.com",           "example.com");
+    check("example.org",           "example.org");
+    check("google.co.in",          "google.co.in");
+    check("github.com",            "github.com");
+    check("openai.com",            "openai.com");
+    check("example.dev",           "example.dev");
+
+    // File names
+    check("main.cpp",              "main.cpp");
+    check("main.c",                "main.c");
+    check("main.h",                "main.h");
+    check("program.exe",           "program.exe");
+    check("README.md",             "README.md");
+    check("file.txt",              "file.txt");
+    check("data.json",             "data.json");
+    check("config.yaml",           "config.yaml");
+    check("script.py",             "script.py");
+    check("app.js",                "app.js");
+    check("Open main.cpp",         "Open main.cpp");
+
+    // Emails
+    check("john@example.com",      "john@example.com");
+    check("john.doe@example.com",  "john.doe@example.com");
+    check("first.last@company.co.in", "first.last@company.co.in");
+    check("Email me at john.doe@example.com", "Email me at john.doe@example.com");
+
+    // Decimals
+    check("3.5",                   "3.5");
+    check("10.25",                 "10.25");
+
+    // Versions
+    check("v1.2.3",                "v1.2.3");
+    check("1.0.0",                 "1.0.0");
+    check("I am using v1.2.3",     "I am using v1.2.3");
+
+    // URLs
+    check("https://example.com",     "https://example.com");
+    check("https://example.com/a,b", "https://example.com/a,b");
+    check("www.example.com",         "www.example.com");
+
+    // Mixed text
+    check("Visit example.com. next sentence", "Visit example.com. Next sentence");
 
     if (failures == 0) {
         cout << "\nAll tests passed.\n";

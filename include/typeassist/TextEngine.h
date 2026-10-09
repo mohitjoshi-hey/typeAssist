@@ -49,6 +49,8 @@ struct TextState {
     bool punctBlocked = false;// it can't be a forgotten space (link, email, number...)
     bool punctEnds = false;// it ended a sentence (false for "Mr.")
     std::string glued; // the letters stuck to it, as typed
+    bool gluedSpaced = false;// true if a space was auto-inserted for this glued word
+    bool tokenAutoCapitalized = false;// true if first letter was auto-capitalized at start of sentence
 };
 
 class TextEngine {
@@ -57,8 +59,7 @@ public:
 
 private:
     TextAction step(const KeyEvent& event);
-    TextAction processCharacter(char ch, bool& insertedSpace);
-    bool gluedWordNeedsSpace() const;
+    TextAction processCharacter(char ch, std::size_t& charsAdded, std::size_t& charsErased);
     TextAction handleBackspace();
     void remember(const TextState& before);
 
