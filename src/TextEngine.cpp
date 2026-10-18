@@ -5,16 +5,110 @@
 
 using namespace std;
 
-// Words whose trailing '.' does not end a sentence ("Mr. Smith").
+static string toLower(const string& str) {
+    string lower;
+    lower.reserve(str.size());
+    for (char ch : str) {
+        lower += static_cast<char>(tolower(static_cast<unsigned char>(ch)));
+    }
+    return lower;
+}
+
+// Words whose trailing '.' does not end a sentence ("Mr. Smith", "etc.").
 static bool isAbbreviation(const string& word) {
     static const char* const kAbbreviations[] = {
-        "mr", "mrs", "ms", "dr", "prof", "sr", "jr", "st", "vs"
+        "mr", "mrs", "ms", "dr", "prof", "sr", "jr", "st", "vs",
+        "etc", "al", "eg", "ie",
+        "rev", "hon", "gen", "col", "maj", "capt", "lt", "sgt", "cpl", "pvt", "rep", "sen", "gov",
+        "approx", "apt", "dept", "est", "fig", "inc", "ltd", "corp", "vol", "no"
     };
+    string lower = toLower(word);
     for (const char* abbreviation : kAbbreviations) {
-        if (word == abbreviation) {
+        if (lower == abbreviation) {
             return true;
         }
     }
+    return false;
+}
+
+// Multi-dot abbreviations whose trailing '.' does not end a sentence ("e.g.", "i.e.", "p.m.").
+static bool isDottedAbbreviation(const string& token) {
+    if (token.empty() || token.back() != '.') return false;
+    string lower = toLower(token);
+    // Find where the dotted sequence starts (e.g. after space or '(')
+    size_t start = 0;
+    while (start < lower.size() && !isalpha(static_cast<unsigned char>(lower[start]))) {
+        ++start;
+    }
+    string sub = lower.substr(start);
+    static const char* const kDottedAbbrs[] = {
+        "e.g.", "i.e.", "a.m.", "p.m.", "u.s.", "u.k.", "d.c.", "b.c.", "a.d.", "ph.d.", "u.s.a."
+    };
+    for (const char* abbr : kDottedAbbrs) {
+        if (sub == abbr) return true;
+    }
+    return false;
+}
+
+static bool isNaturallyLowercaseCodeObject(const string& word) {
+    static const char* const kLowerCodeObjects[] = {
+        "this", "self", "cls", "super",
+        "console", "window", "document", "element", "event",
+        "file", "path", "fs", "os", "io", "arr",
+        "req", "res", "app", "ctx", "props", "state",
+        "env", "db", "api", "log", "err", "std",
+        "config", "server", "client", "node", "process"
+    };
+    string lower = toLower(word);
+    for (const char* obj : kLowerCodeObjects) {
+        if (lower == obj) return true;
+    }
+    return false;
+}
+
+// Built-in objects and keywords frequently used with dot member access in code.
+static bool isCodeObject(const string& word) {
+    if (isNaturallyLowercaseCodeObject(word)) return true;
+    static const char* const kPascalCodeObjects[] = {
+        "math", "string", "object", "array", "json", "system"
+    };
+    string lower = toLower(word);
+    for (const char* obj : kPascalCodeObjects) {
+        if (lower == obj) return true;
+    }
+    return false;
+}
+
+static bool hasCamelCase(const string& str) {
+    bool hasLower = false;
+    for (char ch : str) {
+        if (!isalpha(static_cast<unsigned char>(ch))) {
+            return false;
+        }
+        if (islower(static_cast<unsigned char>(ch))) {
+            hasLower = true;
+        } else if (isupper(static_cast<unsigned char>(ch)) && hasLower) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool isCodeContext(const string& token, const string& wordBeforeDot) {
+    if (token.empty()) return false;
+    // Contains underscores (e.g. my_var, user_id, is_valid)
+    if (token.find('_') != string::npos) return true;
+    // Contains C++ scope resolution or arrow (e.g. std::vector, ptr->field)
+    if (token.find("::") != string::npos || token.find("->") != string::npos) return true;
+    // Contains array brackets (e.g. items[0], arr[i])
+    if (token.find('[') != string::npos || token.find(']') != string::npos) return true;
+    // Contains code symbols like $, #
+    if (token.find('$') != string::npos || token.find('#') != string::npos) return true;
+    // Check identifier before dot for camelCase
+    size_t dotPos = token.find('.');
+    string id = (dotPos != string::npos) ? token.substr(0, dotPos) : token;
+    if (hasCamelCase(id)) return true;
+    if (token.find('.') != string::npos && isCodeObject(wordBeforeDot)) return true;
     return false;
 }
 
@@ -29,15 +123,6 @@ static const char* const kEndings[] = {
     "png", "jpg", "jpeg", "gif", "svg", "zip", "exe", "dll", "cs", "java",
     "go", "rs", "php", "rb", "sh", "bat", "yml", "yaml", "ini", "log", "sql"
 };
-
-static string toLower(const string& str) {
-    string lower;
-    lower.reserve(str.size());
-    for (char ch : str) {
-        lower += static_cast<char>(tolower(static_cast<unsigned char>(ch)));
-    }
-    return lower;
-}
 
 static bool isDomainOrExtension(const string& word) {
     string lower = toLower(word);
@@ -160,6 +245,22 @@ TextAction TextEngine::processCharacter(char ch, size_t& charsAdded, size_t& cha
         }
     }
 
+    // --- Method call '(' handling (e.g. "obj.method()", "cat.speak()") ---
+    if (ch == '(') {
+        if (state_.gluedSpaced) {
+            size_t erase = state_.glued.size() + 1; // erase space + glued letters
+            string text = state_.glued + "(";
+            charsErased = erase;
+            charsAdded = text.size();
+            state_.glued.clear();
+            state_.gluedSpaced = false;
+            state_.lastPunct = '\0';
+            state_.token += "(";
+            state_.prevChar = '(';
+            return {ActionType::Replace, text, erase};
+        }
+    }
+
     // --- Email delimiter '@' handling (e.g. "john@example.com", "john.doe@example.com") ---
     if (ch == '@') {
         state_.linkChar = true;
@@ -227,6 +328,56 @@ TextAction TextEngine::processCharacter(char ch, size_t& charsAdded, size_t& cha
         return {ActionType::Replace, text, 0};
     }
 
+    // If letters after '.' become camelCase (e.g. "obj.getName"), undo forgotten space.
+    if (state_.gluedSpaced && isupper(c) && !state_.glued.empty() &&
+        islower(static_cast<unsigned char>(state_.glued.back()))) {
+        if (state_.tokenAutoCapitalized) {
+            size_t erase = state_.token.size();
+            string uncap = state_.token;
+            uncap[0] = static_cast<char>(tolower(static_cast<unsigned char>(uncap[0])));
+            size_t spacePos = uncap.rfind(' ');
+            if (spacePos != string::npos) {
+                uncap.erase(spacePos, 1);
+            }
+            uncap += ch;
+            charsErased = erase;
+            charsAdded = uncap.size();
+            state_.glued += ch;
+            state_.gluedSpaced = false;
+            state_.lastPunct = '\0';
+            state_.token = uncap;
+            state_.tokenAutoCapitalized = false;
+            state_.prevChar = ch;
+            return {ActionType::Replace, uncap, erase};
+        } else {
+            size_t erase = state_.glued.size() + 1; // erase space + glued letters
+            string text = state_.glued + ch;
+            charsErased = erase;
+            charsAdded = text.size();
+            state_.glued = text;
+            state_.gluedSpaced = false;
+            state_.lastPunct = '\0';
+            state_.token += ch;
+            state_.prevChar = ch;
+            return {ActionType::Replace, text, erase};
+        }
+    }
+
+    // If chained '.' in code/identifier arrives after gluedSpaced (e.g. "a.b.c"):
+    if (ch == '.' && state_.gluedSpaced) {
+        size_t erase = state_.glued.size() + 1; // erase space + glued letters
+        string text = state_.glued + ".";
+        charsErased = erase;
+        charsAdded = text.size();
+        state_.glued.clear();
+        state_.gluedSpaced = false;
+        state_.lastPunct = '.';
+        state_.punctBlocked = true;
+        state_.token += ".";
+        state_.prevChar = '.';
+        return {ActionType::Replace, text, erase};
+    }
+
     // If query letters continue after '?' was spaced (e.g. "?id="):
     if (state_.gluedSpaced && isalpha(c)) {
         state_.glued += static_cast<char>(tolower(c));
@@ -281,8 +432,13 @@ TextAction TextEngine::processCharacter(char ch, size_t& charsAdded, size_t& cha
         // A sentence that starts with a number: nothing to capitalize.
         state_.capitalizeNext = false;
     } else if (c == '.' || c == '!' || c == '?') {
-        if (c == '.' && isAbbreviation(state_.word)) {
-            // Rule 3: "Mr." does not end a sentence.
+        bool isAbbr = (c == '.' && (isAbbreviation(state_.word) || isDottedAbbreviation(state_.token + ".")));
+        bool isCode = (c == '.' && (isCodeContext(state_.token, state_.word) || isCodeObject(state_.word)));
+        if (isAbbr || isCode) {
+            // Rule 3: Abbreviations and code member access do not end a sentence.
+            sentenceEnd = false;
+            state_.endPending = false;
+            state_.capitalizeNext = false;
         } else {
             sentenceEnd = true;
             if (!state_.endPending) {
@@ -293,9 +449,34 @@ TextAction TextEngine::processCharacter(char ch, size_t& charsAdded, size_t& cha
         }
     }
 
-    // If user types a second uppercase letter, it was intentional (e.g. "README")
+    // If user types a second uppercase letter:
+    // If preceded by lowercase letters, it's camelCase (e.g. "userAccount"), so uncapitalize first letter.
+    // If all preceding letters were uppercase, it's an intentional acronym (e.g. "README").
     if (isupper(c) && state_.token.size() > 0 && state_.tokenAutoCapitalized) {
-        state_.tokenAutoCapitalized = false;
+        bool hasLowerSoFar = false;
+        for (char tc : state_.token) {
+            if (islower(static_cast<unsigned char>(tc))) {
+                hasLowerSoFar = true;
+                break;
+            }
+        }
+        if (hasLowerSoFar && state_.token.find('.') == string::npos) {
+            // camelCase detected! Uncapitalize the leading letter that was auto-capitalized.
+            size_t erase = state_.token.size();
+            string uncap = state_.token;
+            uncap[0] = static_cast<char>(tolower(static_cast<unsigned char>(uncap[0])));
+            uncap += ch;
+            charsErased = erase;
+            charsAdded = uncap.size();
+            state_.token = uncap;
+            state_.tokenAutoCapitalized = false;
+            state_.word += static_cast<char>(tolower(c));
+            state_.prevChar = ch;
+            return {ActionType::Replace, uncap, erase};
+        } else {
+            // Acronym like "README"
+            state_.tokenAutoCapitalized = false;
+        }
     }
 
     // Track punctuation state
@@ -308,8 +489,10 @@ TextAction TextEngine::processCharacter(char ch, size_t& charsAdded, size_t& cha
                 state_.punctBlocked = true; // Protect ellipsis from being split
             }
         } else {
+            bool codeToken = (c == '.' && (isCodeContext(state_.token, state_.word) || isCodeObject(state_.word)));
             state_.punctBlocked =
                 state_.token.empty() || state_.inUrl || state_.linkChar ||
+                codeToken ||
                 isdigit(static_cast<unsigned char>(state_.prevChar)) ||
                 (c == '.' && toLower(state_.token) == "www");
             state_.punctEnds = false;
@@ -349,9 +532,11 @@ TextAction TextEngine::processCharacter(char ch, size_t& charsAdded, size_t& cha
     // Comma / semicolon spacing
     if ((c == ',' || c == ';') && !state_.inUrl) {
         state_.spaceNeeded = true;
+        state_.capitalizeNext = false;
+        state_.endPending = false;
     }
 
-    // Uncapitalize start of token if recognized as URL, domain, file, or version
+    // Uncapitalize start of token if recognized as URL, domain, file, version, or code
     if (state_.tokenAutoCapitalized) {
         if (state_.token.size() >= 4 && state_.token.compare(0, 4, "Www.") == 0) {
             size_t erase = state_.token.size();
@@ -372,13 +557,17 @@ TextAction TextEngine::processCharacter(char ch, size_t& charsAdded, size_t& cha
             return {ActionType::Replace, uncap, erase};
         }
         if (!state_.glued.empty() && isDomainOrExtension(state_.glued)) {
-            size_t erase = state_.token.size();
-            string uncap = toLower(state_.token);
-            charsErased = erase;
-            charsAdded = uncap.size();
-            state_.token = uncap;
-            state_.tokenAutoCapitalized = false;
-            return {ActionType::Replace, uncap, erase};
+            size_t dotPos = state_.token.rfind('.');
+            string prefixBeforeDot = (dotPos != string::npos) ? state_.token.substr(0, dotPos + 1) : "";
+            if (!isDottedAbbreviation(prefixBeforeDot) && !isAbbreviation(toLower(state_.token.substr(0, dotPos)))) {
+                size_t erase = state_.token.size();
+                string uncap = toLower(state_.token);
+                charsErased = erase;
+                charsAdded = uncap.size();
+                state_.token = uncap;
+                state_.tokenAutoCapitalized = false;
+                return {ActionType::Replace, uncap, erase};
+            }
         }
         if (isVersionPattern(state_.token)) {
             size_t erase = state_.token.size();
@@ -388,6 +577,26 @@ TextAction TextEngine::processCharacter(char ch, size_t& charsAdded, size_t& cha
             state_.token = uncap;
             state_.tokenAutoCapitalized = false;
             return {ActionType::Replace, uncap, erase};
+        }
+        if (isCodeContext(state_.token, state_.word) ||
+            (state_.token.find('.') != string::npos && isNaturallyLowercaseCodeObject(state_.token.substr(0, state_.token.find('.'))))) {
+            size_t dotPos = state_.token.find('.');
+            string prefixBeforeDot = (dotPos != string::npos) ? state_.token.substr(0, dotPos) : state_.token;
+            if (isNaturallyLowercaseCodeObject(prefixBeforeDot) ||
+                state_.token.find('_') != string::npos ||
+                state_.token.find("::") != string::npos ||
+                state_.token.find("->") != string::npos ||
+                state_.token.find('[') != string::npos ||
+                hasCamelCase(prefixBeforeDot)) {
+                size_t erase = state_.token.size();
+                string uncap = state_.token;
+                uncap[0] = static_cast<char>(tolower(static_cast<unsigned char>(uncap[0])));
+                charsErased = erase;
+                charsAdded = uncap.size();
+                state_.token = uncap;
+                state_.tokenAutoCapitalized = false;
+                return {ActionType::Replace, uncap, erase};
+            }
         }
     }
 

@@ -199,6 +199,41 @@ int main() {
     // Mixed text
     check("Visit example.com. next sentence", "Visit example.com. Next sentence");
 
+    // --- Initials and Dotted Abbreviations ---
+    check("e.g. apples and oranges", "E.g. apples and oranges");
+    check("i.e. that is true",       "I.e. that is true");
+    check("at 5 p.m. today",         "At 5 p.m. today");
+    check("at 8 a.m. tomorrow",      "At 8 a.m. tomorrow");
+    check("in the U.S. government",  "In the U.S. government");
+    check("apples, etc. and more",   "Apples, etc. and more");
+    check("Smith et al. wrote this", "Smith et al. wrote this");
+    check("e.g., apples",            "E.g., apples");
+    check("i.e., that is",           "I.e., that is");
+    check("etc., and so on",         "Etc., and so on");
+    check("Washington, D.C. is great", "Washington, D.C. is great");
+    check("he has a Ph.D. in math",  "He has a Ph.D. in math");
+    check("J. K. Rowling wrote",     "J. K. Rowling wrote");
+    check("George R. R. Martin wrote", "George R. R. Martin wrote");
+    check("read by J. K. Rowling",   "Read by J. K. Rowling");
+    check("e.g.apples",              "E.g. apples");
+    check("etc.and more",            "Etc. and more");
+
+    // --- Code Detection (don't "correct" or insert spaces) ---
+    check("this.state",              "this.state");
+    check("console.log",             "console.log");
+    check("my_var.field",            "my_var.field");
+    check("items[0].value",          "items[0].value");
+    check("std::string.size",        "std::string.size");
+    check("ptr->member.val",         "ptr->member.val");
+    check("userAccount.balance",     "userAccount.balance");
+    check("window.location",         "window.location");
+    check("document.title",          "document.title");
+    check("obj.method()",            "obj.method()");
+    check("obj.getName",             "obj.getName");
+    check("res.status(200)",         "res.status(200)");
+    check("app.get(\"/api\")",       "app.get(\"/api\")");
+    check("Math.max",                "Math.max");
+
     if (failures == 0) {
         cout << "\nAll tests passed.\n";
         return 0;
