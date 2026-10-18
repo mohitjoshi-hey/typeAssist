@@ -9,7 +9,7 @@ KeyEvent -> TextEngine -> TextAction
 The engine is independent of the OS and of AI. Windows and AI plug in around it.
 
 **Current stage:** Phase 1 (core engine)
-**Next step:** Initials and dotted abbreviations (`e.g.`, `etc.`, `i.e.`) and code detection
+**Next step:** Cursor movement and Undo
 
 Legend: `[x]` done, `[ ]` to do
 
@@ -30,7 +30,7 @@ Core types
 - [x] `KeyEvent`, `KeyType` (declared in `TextEngine.h`)
 - [x] `TextAction`, `ActionType` (declared in `TextEngine.h`)
 - [x] `TextState` (what the engine remembers)
-- [x] `TextEngine::process()` (capitalization, `,` `;` spacing, `. ! ?` intelligent spacing, Backspace, abbreviations, decimals, Enter, links, domains, file extensions, emails, and versions done)
+- [x] `TextEngine::process()` (capitalization, `,` `;` spacing, `. ! ?` intelligent spacing, Backspace, abbreviations, decimals, Enter, links, domains, file extensions, emails, versions, initials, dotted abbreviations, and code detection done)
 
 Rules, one at a time, each with tests
 - [x] Capitalize first letter after `.` `!` `?`
@@ -48,9 +48,9 @@ Edge cases to handle
 - [x] Email protection (`john@example.com`, `john.doe@example.com`, `first.last@company.co.in`)
 - [x] URL protection (`https://example.com`, `https://example.com/a,b`, `www.example.com`)
 - [x] Start-of-sentence token protection: uncapitalize leading character when token is recognized as domain, file, email, URL, or version (`example.com`, `main.cpp`)
-- [ ] Initials and dotted abbreviations (`J. K. Rowling`, `e.g.`, `etc.`)
+- [x] Initials and dotted abbreviations (`J. K. Rowling`, `e.g.`, `etc.`, `i.e.`, `a.m.`, `p.m.`, `U.S.`, `et al.`)
 - [x] Capitalize after Enter (new line)
-- [ ] Code (don't "correct" it)
+- [x] Code (don't "correct" it: member access `obj.method()`, `this.state`, `console.log`, `camelCase`, `snake_case`, `[]`, `::`, `->`)
 - [ ] Cursor movement
 - [ ] Undo
 
@@ -93,3 +93,4 @@ Edge cases to handle
 | 2026-10-06 | Capitalize after Enter; 34 tests passing |
 | 2026-10-06 | Sentence ends need a following space; link detection; 42 tests passing |
 | 2026-10-10 | Intelligent `. ! ?` spacing with token protection (domains, files, emails, numbers, versions, URLs); 86 tests passing |
+| 2026-10-19 | Initials and dotted abbreviations (`e.g.`, `i.e.`, `etc.`, `a.m.`, `p.m.`, `U.S.`, `J. K. Rowling`), comma capitalization reset, and code protection (`obj.prop`, `this.state`, `console.log`, `camelCase`, `snake_case`, `[]`, `::`, `->`); 117 tests passing |
