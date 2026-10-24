@@ -206,6 +206,82 @@ TextAction TextEngine::step(const KeyEvent& event) {
     size_t charsErased = 0;
     TextAction action = processCharacter(event.character, charsAdded, charsErased);
 
+    // Case 1: Uncapitalization of token (e.g. main.cpp, userAccount)
+    if (before.tokenAutoCapitalized && !state_.tokenAutoCapitalized && charsErased > 0) {
+        size_t count = min(charsErased, history_.size());
+        auto it = history_.end() - count;
+        if (count > 0 && it->token.empty()) {
+            ++it;
+        }
+        while (it != history_.end()) {
+            if (!it->token.empty()) {
+                it->token[0] = static_cast<char>(tolower(static_cast<unsigned char>(it->token[0])));
+            }
+            it->tokenAutoCapitalized = false;
+            ++it;
+        }
+        if (charsAdded > charsErased) {
+            TextState modifiedBefore = before;
+            if (!modifiedBefore.token.empty()) {
+                modifiedBefore.token[0] = static_cast<char>(tolower(static_cast<unsigned char>(modifiedBefore.token[0])));
+            }
+            modifiedBefore.tokenAutoCapitalized = false;
+            for (size_t i = 0; i < charsAdded - charsErased; ++i) {
+                remember(modifiedBefore);
+            }
+        }
+        return action;
+    }
+
+    // Case 2: Real-time sentence spacing for period (e.g. "hello.wo" -> " wo", erasing 'w')
+    if (before.lastPunct == '.' && action.type == ActionType::Replace &&
+        !action.text.empty() && action.text[0] == ' ' && charsErased > 0 &&
+        charsAdded == charsErased + 2) {
+        size_t toPop = charsErased - 1;
+        while (toPop > 0 && !history_.empty()) {
+            history_.pop_back();
+            --toPop;
+        }
+        TextState afterSpace = history_.empty() ? before : history_.back();
+        afterSpace.token += " ";
+        afterSpace.prevChar = ' ';
+        afterSpace.gluedSpaced = true;
+        afterSpace.lastPunct = '\0';
+        afterSpace.endPending = false;
+        afterSpace.capitalizeNext = false;
+        remember(afterSpace);
+
+        TextState cur = afterSpace;
+        for (size_t i = 0; i < before.glued.size(); ++i) {
+            char gc = before.glued[i];
+            cur.token += gc;
+            cur.prevChar = gc;
+            cur.glued = before.glued.substr(0, i + 1);
+            cur.word = toLower(cur.glued);
+            if (i + 1 < before.glued.size()) {
+                remember(cur);
+            }
+        }
+        remember(cur);
+        return action;
+    }
+
+    // Case 3: Real-time sentence spacing for ! and ? (e.g. "hello!w" -> " W")
+    if ((before.lastPunct == '!' || before.lastPunct == '?') && charsAdded == 2 && charsErased == 0) {
+        remember(before);
+        TextState afterSpace = before;
+        afterSpace.lastPunct = '\0';
+        afterSpace.token += " ";
+        afterSpace.prevChar = ' ';
+        afterSpace.word.clear();
+        afterSpace.glued.clear();
+        afterSpace.gluedSpaced = true;
+        afterSpace.capitalizeNext = true;
+        afterSpace.endPending = false;
+        remember(afterSpace);
+        return action;
+    }
+
     while (charsErased > 0 && !history_.empty()) {
         history_.pop_back();
         --charsErased;

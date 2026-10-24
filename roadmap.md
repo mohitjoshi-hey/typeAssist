@@ -9,7 +9,7 @@ KeyEvent -> TextEngine -> TextAction
 The engine is independent of the OS and of AI. Windows and AI plug in around it.
 
 **Current stage:** Phase 1 (core engine)
-**Next step:** History backspace state preservation & Cursor movement and Undo
+**Next step:** Cursor movement and Undo support
 
 Legend: `[x]` done, `[ ]` to do
 
@@ -36,7 +36,7 @@ Rules, one at a time, each with tests
 - [x] Capitalize first letter after `.` `!` `?`
 - [x] Punctuation spacing for `,` and `;` (`hello,world` -> `hello, world`)
 - [x] Punctuation spacing for `.` `!` `?` with token protection (`hello.world` -> `Hello. world`, `example.com` left untouched)
-- [x] Backspace / editing behavior (state history, last 256 keys)
+- [x] Backspace / editing behavior (state history, last 256 keys, replacement & auto-spacing preservation)
 - [x] Unit tests (`tests/`), enabled in CMake
 
 Edge cases to handle
@@ -97,3 +97,4 @@ Edge cases to handle
 | 2026-10-06 | Sentence ends need a following space; link detection; 42 tests passing |
 | 2026-10-10 | Intelligent `. ! ?` spacing with token protection (domains, files, emails, numbers, versions, URLs); 86 tests passing |
 | 2026-10-19 | Initials and dotted abbreviations (`e.g.`, `i.e.`, `etc.`, `a.m.`, `p.m.`, `U.S.`, `J. K. Rowling`), comma capitalization reset, and code protection (`obj.prop`, `this.state`, `console.log`, `camelCase`, `snake_case`, `[]`, `::`, `->`); 117 tests passing |
+| 2026-10-24 | Fix history state preservation on character replacement backspace (real-time spacing for `.`, `!`, `?` and token uncapitalization); 124 tests passing |
