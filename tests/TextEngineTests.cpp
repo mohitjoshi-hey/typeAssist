@@ -234,6 +234,15 @@ int main() {
     check("app.get(\"/api\")",       "app.get(\"/api\")");
     check("Math.max",                "Math.max");
 
+    // --- Backspace after replacement & auto-spacing ---
+    check("hello.wo\b\b\bx",         "Hello.x");
+    check("hello.world\b\b\b\b\b\bx", "Hello.x");
+    check("hello!w\bx",              "Hello! X");
+    check("really?yes\b\b\b\bx",     "Really? X");
+    check("main.cpp\b\b\b\b\b\b\b\bhello", "Hello");
+    check("main.cpp\b\b\bo",         "main.o");
+    check("userAccount\b\b\b\b\b\b\b\b\b\b\bhello", "Hello");
+
     if (failures == 0) {
         cout << "\nAll tests passed.\n";
         return 0;
