@@ -9,7 +9,7 @@ KeyEvent -> TextEngine -> TextAction
 The engine is independent of the OS and of AI. Windows and AI plug in around it.
 
 **Current stage:** Phase 1 (core engine)
-**Next step:** Initials and dotted abbreviations (`e.g.`, `etc.`, `i.e.`) and code detection
+**Next step:** History backspace state preservation & Cursor movement and Undo
 
 Legend: `[x]` done, `[ ]` to do
 
@@ -21,7 +21,7 @@ Legend: `[x]` done, `[ ]` to do
 - [x] Create GitHub repo `typeAssist`
 - [x] Write `CMakeLists.txt` (core library + demo executable)
 - [x] Add placeholder `src/` files so the project builds
-- [ ] Add `README.md`
+- [x] [PR #5](https://github.com/mohitjoshi-hey/typeAssist/pull/5) Add `README.md`
 - [x] First commit: project builds successfully
 
 ## Phase 1: Core engine (no Windows, no AI)
@@ -30,7 +30,7 @@ Core types
 - [x] `KeyEvent`, `KeyType` (declared in `TextEngine.h`)
 - [x] `TextAction`, `ActionType` (declared in `TextEngine.h`)
 - [x] `TextState` (what the engine remembers)
-- [x] `TextEngine::process()` (capitalization, `,` `;` spacing, `. ! ?` intelligent spacing, Backspace, abbreviations, decimals, Enter, links, domains, file extensions, emails, and versions done)
+- [x] `TextEngine::process()` (capitalization, `,` `;` spacing, `. ! ?` intelligent spacing, Backspace, abbreviations, decimals, Enter, links, domains, file extensions, emails, versions, initials, dotted abbreviations, and code detection done)
 
 Rules, one at a time, each with tests
 - [x] Capitalize first letter after `.` `!` `?`
@@ -40,17 +40,17 @@ Rules, one at a time, each with tests
 - [x] Unit tests (`tests/`), enabled in CMake
 
 Edge cases to handle
-- [x] Abbreviations (`Mr. smith`): `mr mrs ms dr prof sr jr st vs`
-- [x] Decimal numbers (`3.14`) and sentences that start with a number
-- [x] Multi-part numbers and versions (`3.5`, `10.25`, `1.0.0`, `v1.2.3`, `I am using v1.2.3`)
-- [x] Intelligent punctuation spacing for `. ! ?` (`hello.world` -> `Hello. world`, `hello!world` -> `Hello! World`, `really?yes` -> `Really? Yes`)
-- [x] Domain & file extension protection (`example.com`, `google.co.in`, `main.cpp`, `README.md`, `data.json`, `config.yaml` left untouched)
-- [x] Email protection (`john@example.com`, `john.doe@example.com`, `first.last@company.co.in`)
-- [x] URL protection (`https://example.com`, `https://example.com/a,b`, `www.example.com`)
-- [x] Start-of-sentence token protection: uncapitalize leading character when token is recognized as domain, file, email, URL, or version (`example.com`, `main.cpp`)
-- [ ] Initials and dotted abbreviations (`J. K. Rowling`, `e.g.`, `etc.`)
-- [x] Capitalize after Enter (new line)
-- [ ] Code (don't "correct" it)
+- [x] [PR #1](https://github.com/mohitjoshi-hey/typeAssist/pull/1) Abbreviations (`Mr. smith`): `mr mrs ms dr prof sr jr st vs`
+- [x] [PR #1](https://github.com/mohitjoshi-hey/typeAssist/pull/1) Decimal numbers (`3.14`) and sentences that start with a number
+- [x] [PR #9](https://github.com/mohitjoshi-hey/typeAssist/pull/9) Multi-part numbers and versions (`3.5`, `10.25`, `1.0.0`, `v1.2.3`, `I am using v1.2.3`)
+- [x] [PR #9](https://github.com/mohitjoshi-hey/typeAssist/pull/9) Intelligent punctuation spacing for `. ! ?` (`hello.world` -> `Hello. world`, `hello!world` -> `Hello! World`, `really?yes` -> `Really? Yes`)
+- [x] [PR #9](https://github.com/mohitjoshi-hey/typeAssist/pull/9) Domain & file extension protection (`example.com`, `google.co.in`, `main.cpp`, `README.md`, `data.json`, `config.yaml` left untouched)
+- [x] [PR #9](https://github.com/mohitjoshi-hey/typeAssist/pull/9) Email protection (`john@example.com`, `john.doe@example.com`, `first.last@company.co.in`)
+- [x] [PR #7](https://github.com/mohitjoshi-hey/typeAssist/pull/7) [PR #9](https://github.com/mohitjoshi-hey/typeAssist/pull/9) URL protection (`https://example.com`, `https://example.com/a,b`, `www.example.com`)
+- [x] [PR #9](https://github.com/mohitjoshi-hey/typeAssist/pull/9) Start-of-sentence token protection: uncapitalize leading character when token is recognized as domain, file, email, URL, or version (`example.com`, `main.cpp`)
+- [x] [PR #11](https://github.com/mohitjoshi-hey/typeAssist/pull/11) Initials and dotted abbreviations (`J. K. Rowling`, `e.g.`, `etc.`, `i.e.`, `a.m.`, `p.m.`, `U.S.`, `et al.`)
+- [x] [PR #2](https://github.com/mohitjoshi-hey/typeAssist/pull/2) Capitalize after Enter (new line)
+- [x] [PR #11](https://github.com/mohitjoshi-hey/typeAssist/pull/11) Code (don't "correct" it: member access `obj.method()`, `this.state`, `console.log`, `camelCase`, `snake_case`, `[]`, `::`, `->`)
 - [ ] Cursor movement
 - [ ] Undo
 
@@ -78,6 +78,9 @@ Edge cases to handle
 - [ ] Per-app Enter behavior: Enter = new line in chat apps (WhatsApp, ChatGPT),
       send with Shift+Enter or Ctrl+Enter (needs Phase 2: modifier keys in `KeyEvent`,
       foreground-app detection, key-swap action)
+- [ ] History state preservation across multi-character replacements on backspace
+- [ ] Quote-aware and bracket-aware sentence capitalization (`"hello"` -> `"Hello"`, `(note)` -> `(Note)`)
+- [ ] Multi-character ligature and arrow expansion (`->` to `→`, `=>` to `⇒`)
 
 ---
 
@@ -93,3 +96,4 @@ Edge cases to handle
 | 2026-10-06 | Capitalize after Enter; 34 tests passing |
 | 2026-10-06 | Sentence ends need a following space; link detection; 42 tests passing |
 | 2026-10-10 | Intelligent `. ! ?` spacing with token protection (domains, files, emails, numbers, versions, URLs); 86 tests passing |
+| 2026-10-19 | Initials and dotted abbreviations (`e.g.`, `i.e.`, `etc.`, `a.m.`, `p.m.`, `U.S.`, `J. K. Rowling`), comma capitalization reset, and code protection (`obj.prop`, `this.state`, `console.log`, `camelCase`, `snake_case`, `[]`, `::`, `->`); 117 tests passing |
