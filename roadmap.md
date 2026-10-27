@@ -51,7 +51,7 @@ Edge cases to handle
 - [x] [PR #11](https://github.com/mohitjoshi-hey/typeAssist/pull/11) Initials and dotted abbreviations (`J. K. Rowling`, `e.g.`, `etc.`, `i.e.`, `a.m.`, `p.m.`, `U.S.`, `et al.`)
 - [x] [PR #2](https://github.com/mohitjoshi-hey/typeAssist/pull/2) Capitalize after Enter (new line)
 - [x] [PR #11](https://github.com/mohitjoshi-hey/typeAssist/pull/11) Code (don't "correct" it: member access `obj.method()`, `this.state`, `console.log`, `camelCase`, `snake_case`, `[]`, `::`, `->`)
-- [x] Cursor movement (`ArrowLeft`, `ArrowRight`, `ArrowUp`, `ArrowDown`, `Home`, `End` navigation with pending state cancellation and mid-text editing history)
+- [x] [PR #14](https://github.com/mohitjoshi-hey/typeAssist/pull/14) Cursor movement (`ArrowLeft`, `ArrowRight`, `ArrowUp`, `ArrowDown`, `Home`, `End` navigation with pending state cancellation and mid-text editing history)
 - [ ] Undo
 
 ## Phase 2: Windows integration
