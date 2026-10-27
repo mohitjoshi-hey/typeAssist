@@ -15,22 +15,65 @@ static KeyType keyTypeFor(char c) {
 
 // Types a string through a fresh engine and returns what the screen shows.
 // A '\b' in the input means the user pressed Backspace.
+// <Left>, <Right>, <Up>, <Down>, <Home>, <End> represent cursor keys.
 static string simulateTyping(const string& input) {
     TextEngine engine;
     string screen;
+    size_t cursor = 0;
 
-    for (char c : input) {
-        KeyEvent event{keyTypeFor(c), c};
+    size_t i = 0;
+    while (i < input.size()) {
+        KeyEvent event{KeyType::Character, '\0'};
+        if (input.compare(i, 6, "<Left>") == 0) {
+            event = {KeyType::ArrowLeft, '\0'};
+            i += 6;
+        } else if (input.compare(i, 7, "<Right>") == 0) {
+            event = {KeyType::ArrowRight, '\0'};
+            i += 7;
+        } else if (input.compare(i, 4, "<Up>") == 0) {
+            event = {KeyType::ArrowUp, '\0'};
+            i += 4;
+        } else if (input.compare(i, 6, "<Down>") == 0) {
+            event = {KeyType::ArrowDown, '\0'};
+            i += 6;
+        } else if (input.compare(i, 6, "<Home>") == 0) {
+            event = {KeyType::Home, '\0'};
+            i += 6;
+        } else if (input.compare(i, 5, "<End>") == 0) {
+            event = {KeyType::End, '\0'};
+            i += 5;
+        } else {
+            char c = input[i];
+            event = {keyTypeFor(c), c};
+            ++i;
+        }
+
         TextAction action = engine.process(event);
 
         if (event.type == KeyType::Backspace) {
-            if (!screen.empty()) screen.pop_back();
+            if (cursor > 0 && !screen.empty()) {
+                screen.erase(cursor - 1, 1);
+                --cursor;
+            }
+        } else if (event.type == KeyType::ArrowLeft) {
+            if (cursor > 0) --cursor;
+        } else if (event.type == KeyType::ArrowRight) {
+            if (cursor < screen.size()) ++cursor;
+        } else if (event.type == KeyType::Home) {
+            cursor = 0;
+        } else if (event.type == KeyType::End) {
+            cursor = screen.size();
+        } else if (event.type == KeyType::ArrowUp || event.type == KeyType::ArrowDown) {
+            cursor = screen.size();
         } else if (action.type == ActionType::Replace) {
-            // delete `erase` characters, then type the replacement text
-            screen.erase(screen.size() - min(action.erase, screen.size()));
-            screen += action.text;
+            size_t eraseCount = min(action.erase, cursor);
+            screen.erase(cursor - eraseCount, eraseCount);
+            cursor -= eraseCount;
+            screen.insert(cursor, action.text);
+            cursor += action.text.size();
         } else {
-            screen += c;
+            screen.insert(cursor, 1, event.character);
+            ++cursor;
         }
     }
     return screen;
@@ -242,6 +285,17 @@ int main() {
     check("main.cpp\b\b\b\b\b\b\b\bhello", "Hello");
     check("main.cpp\b\b\bo",         "main.o");
     check("userAccount\b\b\b\b\b\b\b\b\b\b\bhello", "Hello");
+
+    // --- Cursor Movement ---
+    check("hello,<Left>a",                   "Helloa,");
+    check("hello.<Left>a",                   "Helloa.");
+    check("abcd<Left>\b",                    "Abd");
+    check("abcd<Left>\be",                   "Abed");
+    check("abcd<Left><Left>\b",              "Acd");
+    check("abcd<Left><Left><Right>\b",       "Abd");
+    check("world<Home>hello ",               "Hello World");
+    check("hello<Home><End> world",          "Hello world");
+    check("hello.<Home>a",                   "AHello.");
 
     if (failures == 0) {
         cout << "\nAll tests passed.\n";

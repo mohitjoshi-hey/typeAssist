@@ -39,9 +39,9 @@ The long-term goal is to make typeAssist work system-wide across desktop applica
 | Editing history | ✅ |
 | Common abbreviation detection | ✅ |
 | Decimal-number handling | ✅ |
-| URL detection | 🚧 |
-| Code-aware text detection | ⏳ |
-| Cursor movement | ⏳ |
+| URL detection | ✅ |
+| Code-aware text detection | ✅ |
+| Cursor movement | ✅ |
 | Undo support | ⏳ |
 | Windows global keyboard hook | ⏳ |
 | AI spelling correction | ⏳ |
