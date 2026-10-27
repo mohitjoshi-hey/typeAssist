@@ -170,9 +170,108 @@ static bool isVersionPattern(const string& token) {
     return hasDot && hasDigitAfterDot;
 }
 
+TextAction TextEngine::handleArrowLeft() {
+    if (cursorOffset_ < history_.size()) {
+        ++cursorOffset_;
+    }
+    state_.spaceNeeded = false;
+    state_.endPending = false;
+    state_.word.clear();
+    state_.token.clear();
+    state_.inUrl = false;
+    state_.linkChar = false;
+    state_.prevChar = '\0';
+    state_.lastPunct = '\0';
+    state_.punctBlocked = false;
+    state_.glued.clear();
+    state_.gluedSpaced = false;
+    state_.tokenAutoCapitalized = false;
+    state_.capitalizeNext = false;
+    return {ActionType::PassThrough, ""};
+}
+
+TextAction TextEngine::handleArrowRight() {
+    if (cursorOffset_ > 0) {
+        --cursorOffset_;
+    }
+    state_.spaceNeeded = false;
+    state_.endPending = false;
+    state_.word.clear();
+    state_.token.clear();
+    state_.inUrl = false;
+    state_.linkChar = false;
+    state_.prevChar = '\0';
+    state_.lastPunct = '\0';
+    state_.punctBlocked = false;
+    state_.glued.clear();
+    state_.gluedSpaced = false;
+    state_.tokenAutoCapitalized = false;
+    state_.capitalizeNext = false;
+    return {ActionType::PassThrough, ""};
+}
+
+TextAction TextEngine::handleArrowUpDown() {
+    cursorOffset_ = 0;
+    history_.clear();
+    state_ = TextState{};
+    state_.capitalizeNext = false;
+    return {ActionType::PassThrough, ""};
+}
+
+TextAction TextEngine::handleHome() {
+    cursorOffset_ = history_.size();
+    state_.spaceNeeded = false;
+    state_.endPending = false;
+    state_.word.clear();
+    state_.token.clear();
+    state_.inUrl = false;
+    state_.linkChar = false;
+    state_.prevChar = '\0';
+    state_.lastPunct = '\0';
+    state_.punctBlocked = false;
+    state_.glued.clear();
+    state_.gluedSpaced = false;
+    state_.tokenAutoCapitalized = false;
+    state_.capitalizeNext = true;
+    return {ActionType::PassThrough, ""};
+}
+
+TextAction TextEngine::handleEnd() {
+    cursorOffset_ = 0;
+    state_.spaceNeeded = false;
+    state_.endPending = false;
+    state_.word.clear();
+    state_.token.clear();
+    state_.inUrl = false;
+    state_.linkChar = false;
+    state_.prevChar = '\0';
+    state_.lastPunct = '\0';
+    state_.punctBlocked = false;
+    state_.glued.clear();
+    state_.gluedSpaced = false;
+    state_.tokenAutoCapitalized = false;
+    state_.capitalizeNext = false;
+    return {ActionType::PassThrough, ""};
+}
+
 TextAction TextEngine::process(const KeyEvent& event) {
     if (event.type == KeyType::Backspace) {
         return handleBackspace();
+    }
+    if (event.type == KeyType::ArrowLeft) {
+        return handleArrowLeft();
+    }
+    if (event.type == KeyType::ArrowRight) {
+        return handleArrowRight();
+    }
+    if (event.type == KeyType::ArrowUp || event.type == KeyType::ArrowDown) {
+        return handleArrowUpDown();
+    }
+    if (event.type == KeyType::Home) {
+        return handleHome();
+    }
+    if (event.type == KeyType::End) {
+        return handleEnd();
     }
     return step(event);
 }
@@ -688,15 +787,28 @@ TextAction TextEngine::processCharacter(char ch, size_t& charsAdded, size_t& cha
 
 TextAction TextEngine::handleBackspace() {
     if (!history_.empty()) {
-        state_ = history_.back();
-        history_.pop_back();
+        if (cursorOffset_ == 0) {
+            state_ = history_.back();
+            history_.pop_back();
+        } else {
+            if (cursorOffset_ < history_.size()) {
+                size_t index = history_.size() - cursorOffset_ - 1;
+                state_ = history_[index];
+                history_.erase(history_.begin() + index);
+            }
+        }
     }
     // Let the Backspace itself through to the application.
     return {ActionType::PassThrough, ""};
 }
 
 void TextEngine::remember(const TextState& before) {
-    history_.push_back(before);
+    if (cursorOffset_ == 0) {
+        history_.push_back(before);
+    } else {
+        size_t index = history_.size() - cursorOffset_;
+        history_.insert(history_.begin() + index, before);
+    }
     if (history_.size() > kMaxHistory) {
         history_.pop_front();
     }

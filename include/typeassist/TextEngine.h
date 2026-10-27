@@ -8,7 +8,13 @@ enum class KeyType {
     Character,
     Space,
     Backspace,
-    Enter
+    Enter,
+    ArrowLeft,
+    ArrowRight,
+    ArrowUp,
+    ArrowDown,
+    Home,
+    End
 };
 
 struct KeyEvent {
@@ -61,11 +67,17 @@ private:
     TextAction step(const KeyEvent& event);
     TextAction processCharacter(char ch, std::size_t& charsAdded, std::size_t& charsErased);
     TextAction handleBackspace();
+    TextAction handleArrowLeft();
+    TextAction handleArrowRight();
+    TextAction handleArrowUpDown();
+    TextAction handleHome();
+    TextAction handleEnd();
     void remember(const TextState& before);
 
     TextState state_;
     // One entry per character on screen: the state before that character,
     // so Backspace can step back exactly one character.
     std::deque<TextState> history_;
+    std::size_t cursorOffset_ = 0; // 0 = at end of text; >0 = characters from end
     static constexpr std::size_t kMaxHistory = 256;
 };
